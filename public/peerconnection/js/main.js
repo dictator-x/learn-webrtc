@@ -23,16 +23,16 @@ function start() {
     console.error("The getUserMedia is not found");
     return;
   } else {
-    var constraints = {
-      video: true,
-      audio: false
-    }
+  var constraints = {
+    video: true,
+    audio: false
+  }
 
-    navigator
-      .mediaDevices
-      .getUserMedia(constraints)
-      .then(getMediaStream)
-      .catch(handleError);
+  navigator
+    .mediaDevices
+    .getUserMedia(constraints)
+    .then(getMediaStream)
+    .catch(handleError);
   }
 }
 
