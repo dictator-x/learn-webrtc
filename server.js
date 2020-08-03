@@ -20,43 +20,43 @@ var http_server = http.createServer(app);
 http_server.listen(8080, "0.0.0.0");
 
 var options = {
-    key: fs.readFileSync("/home/dictator/work_space/webrtc_server/pem/localhost+2-key.pem"),
-    cert: fs.readFileSync("/home/dictator/work_space/webrtc_server/pem/localhost+2.pem")
+   key: fs.readFileSync("/home/dictator/work_space/webrtc_server/pem/localhost+2-key.pem"),
+   cert: fs.readFileSync("/home/dictator/work_space/webrtc_server/pem/localhost+2.pem")
 }
 var https_server = https.createServer(options, app);
 var io = socketIo.listen(https_server);
 
 io.sockets.on('connection', function (socket) {
    socket.on('join', (room) => {
-       socket.join(room);
-       var myRoom = io.sockets.adapter.rooms[room];
-       var users = Object.keys(myRoom.sockets).length;
-       logger.info("the number of user in room is: " + users);
+      socket.join(room);
+      var myRoom = io.sockets.adapter.rooms[room];
+      var users = Object.keys(myRoom.sockets).length;
+      logger.info("the number of user in room is: " + users);
 
-       socket.emit('joined', room, socket.id);
-       // socket.to(room).emit("joined", room, socket.id);
-       // io.in(room).emit("joined", room, socket.id);
-       //socket.broadcast.emit("joined", room, socket.id);
+      socket.emit('joined', room, socket.id);
+      // socket.to(room).emit("joined", room, socket.id);
+      // io.in(room).emit("joined", room, socket.id);
+      //socket.broadcast.emit("joined", room, socket.id);
    });
-    socket.on('leave', (room) => {
-        socket.join(room);
-        var myRoom = io.sockets.adapter.rooms[room];
-        var users = Object.keys(myRoom.sockets).length;
-        logger.info("the number of user in room is: " + users-1);
-        socket.leave(room);
-        // socket.to(room).emit("joined", room, socket.id);
-        // io.in(room).emit("joined", room, socket.id);
-        // socket.broadcast.emit("joined", room, socket.id);
-    });
-    socket.on('message', (room, data)=>{
-        socket.to(room).emit('message', room, socket.id, data)//房间内所有人
-        //socket.broadcast.emit("message", room, socket.id, data);
-    });
+   socket.on('leave', (room) => {
+      socket.join(room);
+      var myRoom = io.sockets.adapter.rooms[room];
+      var users = Object.keys(myRoom.sockets).length;
+      logger.info("the number of user in room is: " + users-1);
+      socket.leave(room);
+      // socket.to(room).emit("joined", room, socket.id);
+      // io.in(room).emit("joined", room, socket.id);
+      // socket.broadcast.emit("joined", room, socket.id);
+   });
+   socket.on('message', (room, data)=>{
+      socket.to(room).emit('message', room, socket.id, data)//房间内所有人
+      //socket.broadcast.emit("message", room, socket.id, data);
+   });
 
 });
 
 https_server.listen(8081, "0.0.0.0")
 // var app = http.createServer(function (req, res) {
-//     res.writeHead(200, {"Content-Type":"text/plain"});
-//     res.end("nodejs Hello World\n")
-// }).listen(8080, "0.0.0.0");
+   //     res.writeHead(200, {"Content-Type":"text/plain"});
+   //     res.end("nodejs Hello World\n")
+   // }).listen(8080, "0.0.0.0");
