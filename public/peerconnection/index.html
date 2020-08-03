@@ -6,8 +6,20 @@
 </head>
 <body>
     <div>
-        <video id  = "localvideo" autoplay playsinline></video>
-        <video id  = "remotevideo" autoplay playsinline></video>
+        <div>
+            <h2>Local: </h2>
+            <video id  = "localvideo" autoplay playsinline></video>
+
+            <h2>Offer SDP:</h2>
+            <textarea id="offer" rows="10" cols="50"></textarea>
+        </div>
+        <div>
+            <h2>Remote: </h2>
+            <video id  = "remotevideo" autoplay playsinline></video>
+
+            <h2>Answer SDP:</h2>
+            <textarea id="answer" rows="10" cols="50"></textarea>
+        </div>
         <div>
             <button id="start">Start</button>
             <button id="call">Call</button>
