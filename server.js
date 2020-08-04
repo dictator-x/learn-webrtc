@@ -17,7 +17,8 @@ var app = express();
 app.use(serveIndex("./public"));
 app.use(express.static('./public'));
 
-var host = "192.168.1.219"
+// var host = "192.168.1.219"
+var host = "127.0.0.1"
 
 var http_server = http.createServer(app);
 http_server.listen(8080, host);

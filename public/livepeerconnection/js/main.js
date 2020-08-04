@@ -5,14 +5,26 @@ var remoteVideo = document.querySelector("video#remotevideo");
 
 var btnConn = document.querySelector("button#connserver");
 var btnLeave = document.querySelector("button#leave");
+var toggleCamera = document.querySelector("button#camera");
 
 var localStream = null;
+var localAudioStream = null;
 
 var roomid = "111111";
 var socket = null;
 var state = "init";
 
 var pc = null;
+var isShowDestop = false;
+
+function show() {
+  if ( isShowDestop ) {
+    toggleCamera.innerText = "Camera";
+  } else {
+    toggleCamera.innerText = "Desktop";
+  }
+  isShowDestop = !isShowDestop;
+}
 
 function call() {
   if ( state === "joined_conn" ) {
@@ -61,23 +73,66 @@ function connSingnalServer() {
 }
 
 function start() {
-  if ( ! navigator.mediaDevices || ! navigator.mediaDevices.getUserMedia) {
+  if (
+    ! navigator.mediaDevices ||
+    ! navigator.mediaDevices.getUserMedia ||
+    ! navigator.mediaDevices.getDisplayMedia
+  ) {
     console.error("The getUserMedia is not supported!");
     return;
   } else {
-    var constraints = {
-      video: true,
-      audio: false
+    var constraints;
+
+    if ( isShowDestop && shareDesk() ) {
+      constraints = {
+        video: false,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      }
+    } else {
+      constraints = {
+        video: true,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      }
     }
 
-    navigator
-      .mediaDevices
-      .getUserMedia(constraints)
-      .then(getMediaStream)
-      .catch(handleError);
+    navigator.mediaDevices.getUserMedia(constraints)
+          .then(getMediaStream)
+          .catch(handleError);
   }
 }
 
+function shareDesk() {
+  //TODO: check if it is PC
+  navigator.mediaDevices.getDisplayMedia({video: true})
+    .then(getDeskStream).catch(handleError);
+	return true;
+}
+
+function getDeskStream(stream) {
+  localStream = stream;
+}
+
+function getMediaStream(stream) {
+  if ( localStream ) {
+    stream.getAudioTracks().forEach((track) => {
+      localStream.addTrack(track);
+      stream.removeTrack(track);
+    });
+  } else {
+    localStream = stream;
+  }
+  localVideo.srcObject = localStream;
+
+  conn();
+}
 function conn() {
   socket = io.connect();
 
@@ -88,6 +143,7 @@ function conn() {
 
     btnConn.disabled = true;
     btnLeave.disabled = false;
+    toggleCamera.disabled = true;
 
     console.log("receive joined message:state=", state);
   });
@@ -113,6 +169,7 @@ function conn() {
 
     btnConn.disabled = false;
     btnLeave.disabled = true;
+    toggleCamera.disabled = false;
   });
 
   socket.on("leaved", (roomid, id) => {
@@ -123,6 +180,7 @@ function conn() {
 
     btnConn.disabled = false;
     btnLeave.disabled = true;
+    toggleCamera.disabled = false;
   });
 
   socket.on("bye", (roomid, id) => {
@@ -167,7 +225,7 @@ function conn() {
   return;
 }
 
-function getMediaStream(stream) {
+function getUserMediaStream(stream) {
   localVideo.srcObject = stream;
   localStream = stream;
 
@@ -180,8 +238,8 @@ function createPeerConnection() {
     var pcConfig = {
       "iceServers": [
         {
-          // "urls": "turn:127.0.0.1:3478?transport=udp",
-          "urls": "turn:192.168.1.219:3478?transport=udp",
+          "urls": "turn:127.0.0.1:3478?transport=udp",
+          // "urls": "turn:192.168.1.219:3478?transport=udp",
           "credential": "root",
           "username": "root"
         }
@@ -204,9 +262,14 @@ function createPeerConnection() {
       }
     }
     pc.ontrack = (e) => {
-      console.log("ononon track: ", e);
       remoteVideo.srcObject = e.streams[0];
     }
+  }
+
+  if ( localAudioStream ) {
+    localAudioStream.getTracks().forEach((track) => {
+      pc.addTrack(track, localAudioStream);
+    })
   }
 
   if ( localStream  ) {
@@ -235,6 +298,13 @@ function closeLocalMedia() {
     });
   }
   localStream = null;
+
+  if ( localAudioStream && localAudioStream.getTracks() ) {
+    localAudioStream.getTracks().forEach((track) => {
+      track.stop();
+    });
+  }
+  localAudioStream = null;
 }
 
 function leave() {
@@ -247,7 +317,9 @@ function leave() {
 
   btnConn.disabled = false;
   btnLeave.disabled = true;
+  toggleCamera.disabled = false;
 }
 
 btnConn.onclick = connSingnalServer;
 btnLeave.onclick = leave;
+toggleCamera.onclick = show;
